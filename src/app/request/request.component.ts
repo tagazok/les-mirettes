@@ -1,29 +1,35 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { AuthService } from '../auth.service';
 import { FormGroup, FormControl, Validators, FormBuilder } from '@angular/forms';
 import { AngularFireDatabase, AngularFireObject, AngularFireList } from 'angularfire2/database';
 import * as moment from 'moment';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  selector: 'app-request',
+  templateUrl: './request.component.html',
+  styleUrls: ['./request.component.css']
 })
-export class AppComponent {
+export class RequestComponent implements OnInit {
   title = 'app';
   sejourForm: FormGroup;
-  members = ["Tiffany", "Kevin", "Patrick", "William", "Benjamin", "Catherine", "Steven"];
-
   requestsRef: AngularFireList<any>;
   pricePerNight = 3;
+  members: Array<String> = [];
 
-  constructor(private fb: FormBuilder, private db: AngularFireDatabase) {
+  constructor(public authService: AuthService,
+              private fb: FormBuilder,
+              private db: AngularFireDatabase) {
     this.createForm();
     this.requestsRef = db.list('requests');
+    this.members.push(this.authService.user.displayName);
+  }
+
+  ngOnInit() {
   }
 
   createForm() {
     this.sejourForm = this.fb.group({
-      member: ['', Validators.required ],
+      member: [{value: this.authService.user.displayName, disabled: true}, Validators.required ],
       start: ['', Validators.required ],
       end: ['', Validators.required ],
       nb: ['', Validators.required ],
@@ -33,11 +39,11 @@ export class AppComponent {
   nbNights() {
     const s = moment(this.sejourForm.value.start);
     const e = moment(this.sejourForm.value.end);
-    return e.diff(s, 'days');
+    return e.diff(s, 'days') || 0;
   }
 
   totalPrice() {
-    return this.nbNights() * this.sejourForm.value.nb * this.pricePerNight;
+    return this.nbNights() * this.sejourForm.value.nb * this.pricePerNight || 0
   }
   add() {
     
@@ -50,5 +56,9 @@ export class AppComponent {
       totalPrice: this.totalPrice(),
     }
     this.requestsRef.push(request);
+  }
+
+  signOut() {
+    this.authService.signOut();
   }
 }

@@ -1,0 +1,73 @@
+<mat-toolbar color="primary">
+  <mat-toolbar-row fxLayout="row">
+    <div fxFlex>Les Mirettes</div>
+    <!-- <img class="avatar" src="https://lh4.googleusercontent.com/-lZ1NmzauJJc/AAAAAAAAAAI/AAAAAAAAgeg/Jaiqf1L_EPM/photo.jpg"> -->
+    <div>
+      <button mat-icon-button [matMenuTriggerFor]="menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+        <button mat-menu-item (click)="signOut()">
+          <mat-icon>exit_to_app</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </mat-menu>
+    </div>
+    <!-- <button (click)="signOut()">Sign Out</button> -->
+  </mat-toolbar-row>
+</mat-toolbar>
+
+<!-- <img class="header-img" src="/assets/vb.jpg"> -->
+<div class="container">
+  <mat-card class="example-card">
+    <mat-card-header>
+      <mat-card-title>
+        <h2>Réservation Les Mirettes</h2>
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="sejourForm" fxLayout='column'>
+        <mat-form-field>
+          <mat-select placeholder="Je suis" name="member" formControlName="member" disabled="true">
+            <mat-option *ngFor="let member of members" [value]="member">
+              {{member}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field>
+          <input matInput [matDatepicker]="pickerStart" placeholder="Début du séjour" formControlName="start">
+          <mat-datepicker-toggle matSuffix [for]="pickerStart"></mat-datepicker-toggle>
+          <mat-datepicker #pickerStart></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field>
+          <input matInput [matDatepicker]="pickerEnd" placeholder="Fin du séjour" formControlName="end">
+          <mat-datepicker-toggle matSuffix [for]="pickerEnd"></mat-datepicker-toggle>
+          <mat-datepicker #pickerEnd></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field>
+          <input matInput placeholder="Nombre de personne (+12 ans)" formControlName="nb">
+        </mat-form-field>
+      </form>
+
+      <mat-divider></mat-divider>
+      <section class="bill" fxLayout="column">
+        <h3 class="label">Récapitulatif</h3>
+        <div fxLayout="row" class="row">
+          <div fxFlex class="label">Nombre de nuits</div>
+          <div>{{nbNights()}}</div>
+        </div>
+        <div class="row total" fxLayout="row">
+          <div fxFlex class="label">TOTAL</div>
+          <div><b>{{totalPrice()}} €</b></div>
+        </div>
+      </section>
+    <mat-divider></mat-divider>
+    </mat-card-content>
+    <mat-card-actions fxLayoutAlign="end center">
+      <button mat-raised-button (click)="add()">Ajouter</button>
+    </mat-card-actions>
+  </mat-card>
+</div>
