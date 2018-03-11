@@ -1,0 +1,30 @@
+.headers-align .mat-expansion-panel-header-title, 
+.headers-align .mat-expansion-panel-header-description {
+  flex-basis: 0;
+}
+
+.headers-align .mat-expansion-panel-header-description {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.request-status {
+  border-radius: 50%;
+  width: 1em;
+  height: 1em;
+}
+.status-pending {
+  background-color: orange;
+}
+
+.status-confirmed {
+  background-color: green;
+}
+
+.status-refused {
+  background-color: red;
+}
+
+.status-paid {
+  background-color: grey;
+}

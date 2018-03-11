@@ -3,6 +3,7 @@ import { AuthService } from '../auth.service';
 import { FormGroup, FormControl, Validators, FormBuilder } from '@angular/forms';
 import { AngularFireDatabase, AngularFireObject, AngularFireList } from 'angularfire2/database';
 import * as moment from 'moment';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-request',
@@ -18,7 +19,8 @@ export class RequestComponent implements OnInit {
 
   constructor(public authService: AuthService,
               private fb: FormBuilder,
-              private db: AngularFireDatabase) {
+              private db: AngularFireDatabase,
+              public snackBar: MatSnackBar) {
     this.createForm();
     this.requestsRef = db.list('requests');
     this.members.push(this.authService.user.displayName);
@@ -46,16 +48,19 @@ export class RequestComponent implements OnInit {
     return this.nbNights() * this.sejourForm.value.nb * this.pricePerNight || 0
   }
   add() {
-    
     const request = {
-      name: this.sejourForm.value.member,
+      member: this.authService.user.providerData[0],
       nbPersons: this.sejourForm.value.nb,
-      startDate: this.sejourForm.value.start.toUTCString(),
-      endDate: this.sejourForm.value.end.toUTCString(),
+      startDate: this.sejourForm.value.start.toString(),
+      endDate: this.sejourForm.value.end.toString(),
       nbNights: this.nbNights(),
       totalPrice: this.totalPrice(),
     }
     this.requestsRef.push(request);
+    this.sejourForm.reset();
+    this.snackBar.open("Demande bien envoyée! :)", "", {
+      duration: 1500,
+    });
   }
 
   signOut() {

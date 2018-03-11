@@ -1,12 +1,8 @@
-<!-- <div *ngIf="afAuth.authState | async as user; else showLogin">
-  <h1>Hello {{ user.displayName }}!</h1>
-  <button (click)="logout()">Logout</button>
-</div>
-<ng-template #showLogin>
-  <p>Please login.</p>
-  <button (click)="login()">Login with Google</button>
-</ng-template>
- -->
-<div class="form-container">
-  <button (click)="loginGoogle()" class="google">Login with Google</button>
+<div fxLayoutAlign="space-around center" fxLayout="column" class="main">
+  <div class="layer"></div>
+  <h1 class="title">Les Mirettes</h1>
+  <img src="/assets/les-mirettes.jpg" class="avatar">
+  <button color="primary" mat-raised-button (click)="loginGoogle()">
+    Se connecter avec Google
+  </button>
 </div>

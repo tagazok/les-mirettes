@@ -17,6 +17,7 @@ html, body {
   padding: 1em;
 }
 
+
 .bill {
   // background-color: #f1f1f1;
   margin: 0 -16px;
@@ -28,6 +29,27 @@ html, body {
 
     .label {
       color: #777;
+    }
+  }
+}
+
+
+@media only screen and (min-device-width: 600px){
+  .bill {
+    margin: 0 -24px;
+    padding: 0 24px;
+  }
+}
+@media only screen and (min-device-width: 768px){
+  .container {
+    place-content: flex-start center;
+    align-items: flex-start;
+    flex-direction: row;
+    box-sizing: border-box;
+    display: flex;
+
+    .main {
+      width: 700px;
     }
   }
 }
