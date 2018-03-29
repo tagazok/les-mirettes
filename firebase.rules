@@ -1,0 +1,22 @@
+{
+  "rules": {
+    "requests": {
+      ".read": "root.child('users').child(auth.uid).child('admin').exists() && root.child('users').child(auth.uid).child('admin').val() === true",
+      ".write": "root.child('users').child(auth.uid).child('admin').exists() && root.child('users').child(auth.uid).child('admin').val() === true"
+    },
+    "users": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        "requests": {
+          ".read": "$uid === auth.uid",
+          ".write": "$uid === auth.uid",
+          "$request": {
+            ".validate": "newData.hasChildren(['startDate', 'endDate', 'nbNights', 'nbPersons', 'totalPrice']) && newData.child('member').hasChildren(['uid', 'displayName', 'email'])",
+            ".read": "$uid === auth.uid  || (root.child('users').child(auth.uid).child('admin').exists() && root.child('users').child(auth.uid).child('admin').val() === true)",
+            ".write": "!data.exists() || !newData.exists() || (root.child('users').child(auth.uid).child('admin').exists() && root.child('users').child(auth.uid).child('admin').val() === true)"
+          }
+        }
+      }
+    }
+  }
+}
