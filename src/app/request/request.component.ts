@@ -4,6 +4,7 @@ import { FormGroup, FormControl, Validators, FormBuilder } from '@angular/forms'
 import { AngularFireDatabase, AngularFireObject, AngularFireList } from 'angularfire2/database';
 import * as moment from 'moment';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-request',
@@ -20,7 +21,8 @@ export class RequestComponent implements OnInit {
   constructor(public authService: AuthService,
               private fb: FormBuilder,
               private db: AngularFireDatabase,
-              public snackBar: MatSnackBar) {
+              public snackBar: MatSnackBar,
+              private router: Router) {
     this.createForm();
     this.requestsRef = db.list(`users/${this.authService.user.uid}/requests`);
     this.members.push(this.authService.user.displayName);
@@ -56,13 +58,13 @@ export class RequestComponent implements OnInit {
       nbNights: this.nbNights(),
       totalPrice: this.totalPrice(),
     }
-    debugger;
+    
     this.requestsRef.push(request);
     this.sejourForm.reset();
     this.snackBar.open("Demande bien envoyée! :)", "", {
       duration: 1500,
     });
-    // this.router.navigate(['/dashboard/my-requests'])
+    this.router.navigate(['/dashboard/my-requests'])
   }
 
   signOut() {
