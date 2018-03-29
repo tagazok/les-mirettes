@@ -70,7 +70,7 @@ export class AuthService {
     return this.signIn();
   }
 
-  signOut(): void {
-    this.afAuth.auth.signOut();
+  signOut(): Promise<void> {
+    return this.afAuth.auth.signOut();
   }
 }

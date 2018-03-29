@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { AngularFireDatabase, AngularFireList } from "angularfire2/database";
 import { Observable } from "rxjs/Observable";
 import * as moment from "moment";
+import { AuthService } from "../auth.service";
 
 @Component({
   selector: "app-requests",
@@ -12,20 +13,9 @@ export class RequestsComponent implements OnInit {
   // requestsRef: AngularFireList<any>;
   requests: Observable<any[]>;
 
-  constructor(private db: AngularFireDatabase) {
-    // this.requests = db.list('requests').valueChanges()
-    // .map(list => list.map((item: any) => ({
-
-    //   // Map to a new item with all of the item's properties:
-    //   ...item,
-
-    //   // And replace the rootwords with an array:
-    //   logs: Object.keys(item.logs || {})
-
-    //     // Use reduce to build an array of values:
-    //     .reduce((acc, key) => [...acc, item.logs[key]], [])
-    //   })
-    // ));
+  constructor(private db: AngularFireDatabase,
+              private authService: AuthService) {
+   
     this.requests = db
       .list("requests")
       .snapshotChanges()
@@ -34,13 +24,8 @@ export class RequestsComponent implements OnInit {
       })
       .map(list =>
         list.map((item: any) => ({
-          // Map to a new item with all of the item's properties:
           ...item,
-
-          // And replace the rootwords with an array:
           logs: Object.keys(item.logs || {})
-
-            // Use reduce to build an array of values:
             .reduce((acc, key) => [...acc, item.logs[key]], [])
         }))
       );

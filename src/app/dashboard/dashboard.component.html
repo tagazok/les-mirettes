@@ -11,13 +11,17 @@
         <mat-icon>more_vert</mat-icon>
       </button>
       <mat-menu #menu="matMenu">
-          <button mat-menu-item routerLink="/dashboard/requests" *ngIf="authService.isAdmin()">
-              <mat-icon>view_list</mat-icon>
-              <span>Requests</span>
-            </button>
+          <button mat-menu-item routerLink="/dashboard/my-requests">
+            <mat-icon>view_list</mat-icon>
+            <span>Mes demandes</span>
+          </button>
+          <button mat-menu-item routerLink="/dashboard/requests">
+            <mat-icon>view_list</mat-icon>
+            <span>Toutes les demandes</span>
+          </button>
         <button mat-menu-item (click)="signOut()">
           <mat-icon>exit_to_app</mat-icon>
-          <span>Sign out</span>
+          <span>Se déconnecter</span>
         </button>
       </mat-menu>
     </div>

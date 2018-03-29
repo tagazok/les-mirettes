@@ -1,7 +1,7 @@
 {
   "rules": {
     "requests": {
-      ".read": "root.child('users').child(auth.uid).child('admin').exists() && root.child('users').child(auth.uid).child('admin').val() === true",
+      ".read": "auth.uid !== null",
       ".write": "root.child('users').child(auth.uid).child('admin').exists() && root.child('users').child(auth.uid).child('admin').val() === true"
     },
     "users": {
