@@ -22,7 +22,7 @@ export class RequestComponent implements OnInit {
               private db: AngularFireDatabase,
               public snackBar: MatSnackBar) {
     this.createForm();
-    this.requestsRef = db.list('requests');
+    this.requestsRef = db.list(`users/${this.authService.user.uid}/requests`);
     this.members.push(this.authService.user.displayName);
   }
 
@@ -56,11 +56,13 @@ export class RequestComponent implements OnInit {
       nbNights: this.nbNights(),
       totalPrice: this.totalPrice(),
     }
+    debugger;
     this.requestsRef.push(request);
     this.sejourForm.reset();
     this.snackBar.open("Demande bien envoyée! :)", "", {
       duration: 1500,
     });
+    // this.router.navigate(['/dashboard/my-requests'])
   }
 
   signOut() {

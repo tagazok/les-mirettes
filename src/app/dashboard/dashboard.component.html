@@ -1,3 +1,28 @@
-<p>
-  dashboard works!
-</p>
+<mat-toolbar color="primary">
+  <mat-toolbar-row fxLayout="row">
+    <div fxFlex>
+      <a routerLink="/dashboard/my-requests" routerLinkActive="active" class="no-decoration">
+        Les Mirettes
+      </a>
+    </div>
+    <!-- <img class="avatar" src="https://lh4.googleusercontent.com/-lZ1NmzauJJc/AAAAAAAAAAI/AAAAAAAAgeg/Jaiqf1L_EPM/photo.jpg"> -->
+    <div>
+      <button mat-icon-button [matMenuTriggerFor]="menu">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+      <mat-menu #menu="matMenu">
+          <button mat-menu-item routerLink="/dashboard/requests" *ngIf="authService.isAdmin()">
+              <mat-icon>view_list</mat-icon>
+              <span>Requests</span>
+            </button>
+        <button mat-menu-item (click)="signOut()">
+          <mat-icon>exit_to_app</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </mat-menu>
+    </div>
+    <!-- <button (click)="signOut()">Sign Out</button> -->
+  </mat-toolbar-row>
+</mat-toolbar>
+
+<router-outlet></router-outlet>

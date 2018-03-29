@@ -1,4 +1,5 @@
 <div class="container">
+  
   <mat-accordion class="main headers-align">
     <mat-expansion-panel hideToggle="true" *ngFor="let request of requests |async">
       <mat-expansion-panel-header>
@@ -10,7 +11,6 @@
         </mat-panel-description>
         <div class="request-status status-{{request.status}}" matTooltip="{{request.status}}"></div>
       </mat-expansion-panel-header>
-
       <div>
         Début: {{request.startDate |date:'EEEE dd MMMM yyyy'}}
       </div>
@@ -23,9 +23,17 @@
       <div>
         Status: {{request.status}}
       </div>
-
+      Logs
+      <div class="logs">
+        <div *ngFor="let log of request.logs">
+          <span>[{{log.date |date:'dd-MM-yyyy'}}] {{log.user}} - {{log.message}} :)</span>
+        </div>
+      </div>
       <mat-action-row>
-        <button mat-button color="primary">Confirmer</button>
+          <button mat-button color="primary" (click)="chanteStatus(request, 'refused')">Refuser</button>
+        <button mat-button color="primary" (click)="chanteStatus(request, 'confirmed')">Confirmer</button>
+        <button mat-button color="primary" (click)="chanteStatus(request, 'paid')">A payé</button>
+        <button mat-button color="warn" (click)="chanteStatus(request, 'canceled')">Annuler</button>
       </mat-action-row>
     </mat-expansion-panel>
   </mat-accordion>

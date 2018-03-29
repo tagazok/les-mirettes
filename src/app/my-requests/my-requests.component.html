@@ -1,0 +1,35 @@
+<div class="container">
+    <mat-accordion class="main headers-align">
+      <mat-expansion-panel hideToggle="true" *ngFor="let request of requests |async">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            {{request.member.displayName}}
+          </mat-panel-title>
+          <mat-panel-description>
+            {{request.nbNights}} nuits ({{getDateRange(request)}})
+          </mat-panel-description>
+          <div class="request-status status-{{request.status}}" matTooltip="{{request.status}}"></div>
+        </mat-expansion-panel-header>
+        <div>
+          Début: {{request.startDate |date:'EEEE dd MMMM yyyy'}}
+        </div>
+        <div>
+          Fin: {{request.endDate |date:'EEEE dd MMMM yyyy'}}
+        </div>
+        <div>
+            {{request.nbPersons}} personnes
+        </div>
+        <div>
+          Status: {{request.status}}
+        </div>
+        <mat-action-row>
+          <button mat-button color="warn" (click)="chanteStatus(request, 'canceled')">Annuler</button>
+        </mat-action-row>
+      </mat-expansion-panel>
+    </mat-accordion>
+    <a routerLink="/dashboard/request" routerLinkActive="active" class="add-button">
+      <button mat-fab color="primary">
+          <i class="material-icons">add</i>
+      </button>
+    </a>
+  </div>

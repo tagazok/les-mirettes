@@ -16,6 +16,7 @@ import {FirebaseError} from 'firebase/app';
 export class AuthService {
   public user: firebase.User;
   public authState$: Observable<firebase.User>;
+  public admin: boolean;
 
   constructor(private afAuth: AngularFireAuth) {
     this.user = null;
@@ -34,6 +35,18 @@ export class AuthService {
 
   get id(): string {
     return this.authenticated ? this.user.uid : null;
+  }
+
+  isAdmin() {
+    if (!this.admin) {
+      const ls = window.localStorage.getItem("admin");
+      if (!ls) {
+        this.admin = false;
+      } else {
+        this.admin = true;
+      }
+    }
+    return this.admin;
   }
 
   signIn(): Promise<void> {

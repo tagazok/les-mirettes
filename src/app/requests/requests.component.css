@@ -13,6 +13,7 @@
   width: 1em;
   height: 1em;
 }
+
 .status-pending {
   background-color: orange;
 }
@@ -27,4 +28,10 @@
 
 .status-paid {
   background-color: grey;
+}
+
+.logs {
+  background-color: #f5f5f5;
+  padding: 1em;
+  border: solid 1px #ddd;
 }
