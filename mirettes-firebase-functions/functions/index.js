@@ -116,8 +116,13 @@ exports.updateStatus = functions.database.ref("/requests/{requestId}/status").on
     user: '',
     message: `Status mis à jour: ${event.data.val()}`
   };
-
-  return event.data.ref.parent.child('logs').push(log);
+  return event.data.ref.parent.child('member').once('value').then((snapshot) => {
+    console.log(`status changes user id : ${snapshot.val().uid}`);
+    const userId = snapshot.val().uid;
+    return admin.database().ref(`/users/${userId}/requests/${event.params.requestId}/status`).set(event.data.val());
+  });
+  
+  // return event.data.ref.parent.child('logs').push(log);
 });
 
 
