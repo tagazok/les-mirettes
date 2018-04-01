@@ -51,7 +51,11 @@ export class RequestComponent implements OnInit {
   }
   add() {
     const request = {
-      member: this.authService.user.providerData[0],
+      member: {
+        uid: this.authService.user.uid.toString(),
+        displayName: this.authService.user.displayName.toString(),
+        email: this.authService.user.email
+      },
       nbPersons: this.sejourForm.value.nb,
       startDate: this.sejourForm.value.start.toString(),
       endDate: this.sejourForm.value.end.toString(),

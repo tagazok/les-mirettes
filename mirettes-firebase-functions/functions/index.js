@@ -7,7 +7,12 @@ const admin = require('firebase-admin');
 const {OAuth2Client} = require('google-auth-library');
 const {google} = require('googleapis');
 
+admin.initializeApp(functions.config().firebase);
+const db = admin.database();
 
+
+const GOOGLE_EMAIL = functions.config().google.email;
+const GOOGLE_PASSWORD = functions.config().google.password;
 // Configure the email transport using the default SMTP transport and a GMail account.
 // For other types of transports such as Sendgrid see https://nodemailer.com/transports/
 // TODO: Configure the `gmail.email` and `gmail.password` Google Cloud environment variables.
@@ -16,8 +21,8 @@ const {google} = require('googleapis');
 const mailTransport = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'mirettes.vb@gmail.com',
-    pass: '',
+    user: GOOGLE_EMAIL,
+    pass: GOOGLE_PASSWORD,
   },
 });
 
@@ -30,15 +35,27 @@ exports.createProfile = functions.auth.user().onCreate( event => {
   });
 });
 
+// New request : duplicate on /requests
 exports.copyRequest = functions.database.ref("{users}/{userId}/requests/{requestId}").onCreate(event => {
   const snapshot = event.data;
   const val = snapshot.val();
+  val.status = "En attente";
   console.log(event.params);
   const rid = event.params.requestId;
   
   return admin.database().ref(`/requests/${rid}`).set(val);
 });
 
+// New request : Set default status
+exports.setDefaultStatus = functions.database.ref("{users}/{userId}/requests/{requestId}").onCreate(event => {
+  const snapshot = event.data;
+  const val = snapshot.val();
+  console.log(snapshot);
+  console.log(val);
+  return snapshot.ref.child('status').set('En attente');
+});
+
+// New request : Add log
 exports.writeFirstLog = functions.database.ref("requests/{requestId}").onCreate(event => {
   const snapshot = event.data;
   const val = snapshot.val();
@@ -50,6 +67,38 @@ exports.writeFirstLog = functions.database.ref("requests/{requestId}").onCreate(
   return snapshot.ref.child('logs').push(log);
 });
 
+
+// New request : Send email
+exports.sendPendingEmail = functions.database.ref("{users}/{userId}/requests/{requestId}").onCreate(event => {
+  const snapshot = event.data;
+  const val = snapshot.val();
+  console.log(snapshot);
+  console.log(val);
+
+  const mailOptions = {
+    from: '"Les Mirettes" <noreply@firebase.com>',
+    to: val.member.email,
+  };
+
+  // Building Email message.
+  mailOptions.subject = 'Demande de réservation Les Mirettes';
+  mailOptions.html = `
+  <p>Bonjour ${val.member.displayName}</p>
+  <p>Nous avons bien reçu votre demande de réservation</p>
+  <p>Récapitulatif :</p>
+  <p>Du ${val.startDate} au ${val.endDate} (${val.nbNights} nuits)</p>
+  <p>Pour <b>${val.nbPersons} personnes</b></p>
+  <p>TOTAL : <b>${val.totalPrice} euro</b></p>
+  <p></p>
+  <p>A bientôt :)</p>
+  `
+
+  return mailTransport.sendMail(mailOptions)
+    .then(() => console.log(`New subscription confirmation email sent:`))
+    .catch((error) => console.error('There was an error while sending the email:', error));
+});
+
+// Status changes : Add log
 exports.writeLog = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
   const log = {
     date: Date(),
@@ -60,60 +109,22 @@ exports.writeLog = functions.database.ref("/requests/{requestId}/status").onUpda
   // return snapshot.ref.child('logs').push(log);
 });
 
-// exports.updateStatus = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
-//   const log = {
-//     date: Date(),
-//     user: '',
-//     message: `Status mis à jour: ${event.data.val()}`
-//   };
-//   return event.data.ref.parent.child('logs').push(log);
-// });
+// Status changes : Update status on /{users}/{userId}/requests/{requestId}
+exports.updateStatus = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
+  const log = {
+    date: Date(),
+    user: '',
+    message: `Status mis à jour: ${event.data.val()}`
+  };
 
-exports.setDefaultStatus = functions.database.ref("{users}/{userId}/requests/requests/{requestId}").onCreate(event => {
-  const snapshot = event.data;
-  const val = snapshot.val();
-  console.log(snapshot);
-  console.log(val);
-  return snapshot.ref.child('status').set('pending');
+  return event.data.ref.parent.child('logs').push(log);
 });
-
-exports.sendPendingEmail = functions.database.ref("{users}/{userId}/requests/{requestId}").onCreate(event => {
-    const snapshot = event.data;
-    const val = snapshot.val();
-    console.log(snapshot);
-    console.log(val);
-
-    const mailOptions = {
-      from: '"Les Mirettes" <noreply@firebase.com>',
-      to: val.member.email,
-    };
-  
-    // Building Email message.
-    mailOptions.subject = 'Demande de réservation Les Mirettes';
-    // mailOptions.text = 'Thanks you for subscribing to our newsletter. You will receive our next weekly newsletter.';
-    mailOptions.html = `
-    <p>Bonjour ${val.member.displayName}</p>
-    <p>Nous avons bien reçu votre demande de réservation</p>
-    <p>Récapitulatif :</p>
-    <p>Du ${val.startDate} au ${val.endDate} (${val.nbNights} nuits)</p>
-    <p>Pour <b>${val.nbPersons} personnes</b></p>
-    <p>TOTAL : <b>${val.totalPrice} euro</b></p>
-    <p></p>
-    <p>A bientôt :)</p>
-    `
-  
-    return mailTransport.sendMail(mailOptions)
-      .then(() => console.log(`New subscription confirmation email sent:`))
-      .catch((error) => console.error('There was an error while sending the email:', error));
-})
 
 
 // --------------------------------------------------------------------------------------
 // Sample trigger function that copies new Firebase data to a Google Sheet
 
 
-admin.initializeApp(functions.config().firebase);
-const db = admin.database();
 
 // TODO: Use firebase functions:config:set to configure your googleapi object:
 // googleapi.client_id = Google API client ID,
@@ -176,7 +187,7 @@ exports.appendrecordtospreadsheet = functions.database.ref('{users}/{userId}/req
     const newRecord = event.data.current.val();
     return appendPromise({
       spreadsheetId: CONFIG_SHEET_ID,
-      range: 'A:F',
+      range: 'A:G',
       valueInputOption: 'USER_ENTERED',
       insertDataOption: 'INSERT_ROWS',
       resource: {
