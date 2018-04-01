@@ -30,10 +30,10 @@
         </div>
       </div>
       <mat-action-row  *ngIf="authService.isAdmin()">
-          <button mat-button color="primary" (click)="chanteStatus(request, 'refused')">Refuser</button>
-        <button mat-button color="primary" (click)="chanteStatus(request, 'confirmed')">Confirmer</button>
-        <button mat-button color="primary" (click)="chanteStatus(request, 'paid')">A payé</button>
-        <button mat-button color="warn" (click)="chanteStatus(request, 'canceled')">Annuler</button>
+        <button mat-button color="primary" (click)="chanteStatus(request, 'refusée')">Refuser</button>
+        <button mat-button color="primary" (click)="chanteStatus(request, 'confirmée')">Confirmer</button>
+        <button mat-button color="primary" (click)="chanteStatus(request, 'payée')">A payé</button>
+        <button mat-button color="warn" (click)="chanteStatus(request, 'annulée')">Annuler</button>
       </mat-action-row>
     </mat-expansion-panel>
   </mat-accordion>
