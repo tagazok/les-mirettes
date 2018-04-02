@@ -35,46 +35,39 @@ exports.createProfile = functions.auth.user().onCreate( event => {
   });
 });
 
-// New request : duplicate on /requests
-exports.copyRequest = functions.database.ref("{users}/{userId}/requests/{requestId}").onCreate(event => {
-  const snapshot = event.data;
-  const val = snapshot.val();
-  val.status = "En attente";
-  console.log(event.params);
-  const rid = event.params.requestId;
-  
-  return admin.database().ref(`/requests/${rid}`).set(val);
-});
+/*
+New request scenario :
+  1/ Set default status
+  2/ Add to calendar
+  3/ Add log
+  4/ Duplicate request
+  5/ Send email
+  6/ Add to sheet
+*/
 
-// New request : Set default status
-exports.setDefaultStatus = functions.database.ref("{users}/{userId}/requests/{requestId}").onCreate(event => {
-  const snapshot = event.data;
-  const val = snapshot.val();
-  console.log(snapshot);
-  console.log(val);
-  return snapshot.ref.child('status').set('En attente');
-});
+function setStatus(snapshot, status) {
+  console.log("*** setStatus ***");
+  return snapshot.ref.child('status').set(status);
+}
 
-// New request : Add log
-exports.writeFirstLog = functions.database.ref("requests/{requestId}").onCreate(event => {
-  const snapshot = event.data;
-  const val = snapshot.val();
+function duplicateRequest(requestId, val) {
+  console.log("*** duplicateRequest ***");
+  return admin.database().ref(`/requests/${requestId}`).set(val);
+}
+
+function addLog(requestId, val, message) {
+  console.log("*** addLog ***");
   const log = {
     date: Date(),
     user: val.member.displayName,
-    message: "Requète créée"
+    message: message
   };
-  return snapshot.ref.child('logs').push(log);
-});
+  return admin.database().ref(`/requests/${requestId}/logs`).push(log);
+  // return snapshot.ref.child('logs').push(log);
+}
 
-
-// New request : Send email
-exports.sendPendingEmail = functions.database.ref("{users}/{userId}/requests/{requestId}").onCreate(event => {
-  const snapshot = event.data;
-  const val = snapshot.val();
-  console.log(snapshot);
-  console.log(val);
-
+function sendEmail(val) {
+  console.log("*** sendEmail ***");
   const mailOptions = {
     from: '"Les Mirettes" <noreply@firebase.com>',
     to: val.member.email,
@@ -94,9 +87,125 @@ exports.sendPendingEmail = functions.database.ref("{users}/{userId}/requests/{re
   `
 
   return mailTransport.sendMail(mailOptions)
-    .then(() => console.log(`New subscription confirmation email sent:`))
+    .then(() => console.log(`New subscription confirmation email sent`))
     .catch((error) => console.error('There was an error while sending the email:', error));
+}
+
+function addToSheet() {
+  const data = {
+    spreadsheetId: CONFIG_SHEET_ID,
+    range: 'A:G',
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'INSERT_ROWS',
+    resource: {
+      values: [[val.member.displayName,
+              val.startDate,
+              val.endDate,
+              val.nbNights,
+              val.nbPersons,
+              val.totalPrice,
+              val.status]],
+    }
+  };
+  return new Promise((resolve, reject) => {
+    return getAuthorizedClient().then((client) => {
+      const sheets = google.sheets('v4');
+      const request = data;
+      request.auth = client;
+      return sheets.spreadsheets.values.append(request, (err, response) => {
+        if (err) {
+          console.log(`The API returned an error: ${err}`);
+          return reject(err);
+        }
+        return resolve(response);
+      });
+    });
+  });
+}
+
+function addToCalendar(val) {
+  console.log("*** addToCalendar ***");
+  return new Promise((resolve, reject) => {
+    return getAuthorizedClient().then((client) => {
+      const calendar = google.calendar("v3");
+      const startDate = new Date(val.startDate);
+      const endDate = new Date(val.endDate);
+      console.log(`startDate : ${startDate} => ${startDate.getFullYear()}-${getTwoDigitsDate(startDate.getMonth() + 1)}-${getTwoDigitsDate(startDate.getDate())}`);
+      console.log(`endDate : ${endDate} => ${endDate.getFullYear()}-${getTwoDigitsDate(endDate.getMonth() + 1)}-${getTwoDigitsDate(endDate.getDate())}`);
+      var event = {
+        "summary": `(en attente) ${val.member.displayName}`,
+        "description": `${val.nbPersons} personnes`,
+        "start": {
+          "date": `${startDate.getFullYear()}-${getTwoDigitsDate(startDate.getMonth() + 1)}-${getTwoDigitsDate(startDate.getDate())}`,
+          "timeZone": "Europe/Paris",
+        },
+        "end": {
+          "date": `${endDate.getFullYear()}-${getTwoDigitsDate(endDate.getMonth() + 1)}-${getTwoDigitsDate(endDate.getDate())}`,
+          "timeZone": "Europe/Paris",
+        }
+      };
+
+      return calendar.events.insert({
+        auth: client,
+        calendarId: "primary",
+        resource: event,
+      }, function(err, event) {
+        if (err) {
+          console.log("There was an error contacting the Calendar service: " + err);
+          return reject(err);
+        }
+        console.log(`event.data: ${JSON.stringify(event.data)}`);
+        return resolve(event.data);
+        // console.log("Event created: %s", event.htmlLink);
+      });
+    });
+  });
+}
+
+function getTwoDigitsDate(number) {
+  if (number >= 10) return number;
+  return "0" + number;
+}
+
+exports.newRequest = functions.database.ref("{users}/{userId}/requests/{requestId}").onCreate(event => {
+  const snapshot = event.data;
+  const val = snapshot.val();
+  const status = "En attente";
+  val.status = status;
+  const requestId = event.params.requestId;
+
+  return setStatus(snapshot, status)
+  .then(() => {
+    console.log("*** setStatus DONE ***");
+    return addToCalendar(val);
+  })
+  .then(cal => {
+    console.log("*** addToCalendar DONE ***");
+    console.log(`calEvent: ${JSON.stringify(cal)}`);
+    val.event = cal || "";
+    return snapshot.ref.child('event').set(val.event);
+  })
+  .then(() => {
+    console.log("*** setEvent DONE ***");
+    return duplicateRequest(requestId, val);
+  })
+  .then(() => {
+    console.log("*** duplicateRequest DONE ***");
+    return addLog(requestId, val, "Requète créée");
+  })
+  .then(() => {
+    console.log("*** addLog DONE ***");
+    return sendEmail(val)
+  })
+  .then(() => {
+    console.log("*** sendEmail DONE ***");
+    return addToSheet(val)
+  })
+  .then(() => {
+    console.log("*** addToSheet DONE ***");
+  });
 });
+
 
 // Status changes : Add log
 exports.writeLog = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
@@ -121,8 +230,40 @@ exports.updateStatus = functions.database.ref("/requests/{requestId}/status").on
     const userId = snapshot.val().uid;
     return admin.database().ref(`/users/${userId}/requests/${event.params.requestId}/status`).set(event.data.val());
   });
+});
+
+// Status changes : Update calendar
+exports.updateStatus = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
   
-  // return event.data.ref.parent.child('logs').push(log);
+  return new Promise((resolve, reject) => {
+    return getAuthorizedClient().then((client) => {
+      const calendar = google.calendar("v3");
+
+      return calendar.events.update({
+        auth: client,
+        calendarId: "primary",
+        eventId: ""
+      }, function(err, event) {
+        if (err) {
+          console.log("Error updating event" + err);
+          return
+        }
+        console.log("Event updated");
+      })
+
+      return calendar.events.insert({
+        auth: client,
+        calendarId: "primary",
+        resource: event,
+      }, function(err, event) {
+        if (err) {
+          console.log("There was an error contacting the Calendar service: " + err);
+          return;
+        }
+        console.log("Event created: %s", event.htmlLink);
+      });
+    });
+  });
 });
 
 
@@ -141,10 +282,9 @@ const CONFIG_SHEET_ID = functions.config().googleapi.sheet_id;
 
 // TODO: Use firebase functions:config:set to configure your watchedpaths object:
 // watchedpaths.data_path = Firebase path for data to be synced to Google Sheet
-const CONFIG_DATA_PATH = functions.config().watchedpaths.data_path;
+// const CONFIG_DATA_PATH = functions.config().watchedpaths.data_path;
 
 // The OAuth Callback Redirect.
-// const FUNCTIONS_REDIRECT = `https://${process.env.GCLOUD_PROJECT}.firebaseapp.com/oauthcallback`;
 const FUNCTIONS_REDIRECT = 'https://us-central1-lesmirettesvb.cloudfunctions.net/oauthcallback';
 
 // setup for authGoogleAPI
@@ -186,96 +326,6 @@ exports.oauthcallback = functions.https.onRequest((req, res) => {
   });
 });
 
-// trigger function to write to Sheet when new data comes in on CONFIG_DATA_PATH
-exports.appendrecordtospreadsheet = functions.database.ref('{users}/{userId}/requests/{ITEM}').onCreate(
-  (event) => {
-    const newRecord = event.data.current.val();
-    return appendPromise({
-      spreadsheetId: CONFIG_SHEET_ID,
-      range: 'A:G',
-      valueInputOption: 'USER_ENTERED',
-      insertDataOption: 'INSERT_ROWS',
-      resource: {
-        values: [[newRecord.member.displayName,
-                newRecord.startDate,
-                newRecord.endDate,
-                newRecord.nbNights,
-                newRecord.nbPersons,
-                newRecord.totalPrice,
-                newRecord.status]],
-      },
-    });
-  }
-);
-
-// accepts an append request, returns a Promise to append it, enriching it with auth
-function appendPromise(requestWithoutAuth) {
-  return new Promise((resolve, reject) => {
-    return getAuthorizedClient().then((client) => {
-      const sheets = google.sheets('v4');
-      const request = requestWithoutAuth;
-      request.auth = client;
-      return sheets.spreadsheets.values.append(request, (err, response) => {
-        if (err) {
-          console.log(`The API returned an error: ${err}`);
-          return reject(err);
-        }
-        return resolve(response);
-      });
-    });
-  });
-}
-
-exports.appendrecordtocalendar = functions.database.ref('{users}/{userId}/requests/{ITEM}').onCreate(
-  (event) => {
-    const newRecord = event.data.current.val();
-    return appendPromiseCalendar(newRecord);
-  }
-);
-
-function getTwoDigitsDate(number) {
-  if (number >= 10) return number;
-  return "0" + number;
-}
-
-// accepts an append request, returns a Promise to append it, enriching it with auth
-function appendPromiseCalendar(data) {
-  return new Promise((resolve, reject) => {
-    return getAuthorizedClient().then((client) => {
-      const calendar = google.calendar("v3");
-      const startDate = new Date(data.startDate);
-      const endDate = new Date(data.endDate);
-      console.log(`startDate : ${startDate} => ${startDate.getFullYear()}-${getTwoDigitsDate(startDate.getMonth() + 1)}-${getTwoDigitsDate(startDate.getDate())}`);
-      console.log(`endDate : ${endDate} => ${endDate.getFullYear()}-${getTwoDigitsDate(endDate.getMonth() + 1)}-${getTwoDigitsDate(endDate.getDate())}`);
-      var event = {
-        "summary": `(en attente) ${data.member.displayName}`,
-        "description": `${data.nbPersons} personnes`,
-        "start": {
-          "date": `${startDate.getFullYear()}-${getTwoDigitsDate(startDate.getMonth() + 1)}-${getTwoDigitsDate(startDate.getDate())}`,
-          "timeZone": "Europe/Paris",
-        },
-        "end": {
-          "date": `${endDate.getFullYear()}-${getTwoDigitsDate(endDate.getMonth() + 1)}-${getTwoDigitsDate(endDate.getDate())}`,
-          "timeZone": "Europe/Paris",
-        }
-      };
-
-      return calendar.events.insert({
-        auth: client,
-        calendarId: "primary",
-        resource: event,
-      }, function(err, event) {
-        if (err) {
-          console.log("There was an error contacting the Calendar service: " + err);
-          return;
-        }
-        console.log("Event created: %s", event.htmlLink);
-      });
-    });
-  });
-}
-
-
 // checks if oauthTokens have been loaded into memory, and if not, retrieves them
 function getAuthorizedClient() {
   if (oauthTokens) {
@@ -289,15 +339,15 @@ function getAuthorizedClient() {
 }
 
 // HTTPS function to write new data to CONFIG_DATA_PATH, for testing
-exports.testsheetwrite = functions.https.onRequest((req, res) => {
-  const random1 = Math.floor(Math.random() * 100);
-  const random2 = Math.floor(Math.random() * 100);
-  const random3 = Math.floor(Math.random() * 100);
-  const ID = new Date().getUTCMilliseconds();
-  return db.ref(`${CONFIG_DATA_PATH}/${ID}`).set({
-    firstColumn: random1,
-    secondColumn: random2,
-    thirdColumn: random3,
-  }).then(() => res.status(200).send(
-    `Wrote ${random1}, ${random2}, ${random3} to DB, trigger should now update Sheet.`));
-});
+// exports.testsheetwrite = functions.https.onRequest((req, res) => {
+//   const random1 = Math.floor(Math.random() * 100);
+//   const random2 = Math.floor(Math.random() * 100);
+//   const random3 = Math.floor(Math.random() * 100);
+//   const ID = new Date().getUTCMilliseconds();
+//   return db.ref(`${CONFIG_DATA_PATH}/${ID}`).set({
+//     firstColumn: random1,
+//     secondColumn: random2,
+//     thirdColumn: random3,
+//   }).then(() => res.status(200).send(
+//     `Wrote ${random1}, ${random2}, ${random3} to DB, trigger should now update Sheet.`));
+// });
