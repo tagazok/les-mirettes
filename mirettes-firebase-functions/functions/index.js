@@ -35,16 +35,6 @@ exports.createProfile = functions.auth.user().onCreate( event => {
   });
 });
 
-/*
-New request scenario :
-  1/ Set default status
-  2/ Add to calendar
-  3/ Add log
-  4/ Duplicate request
-  5/ Send email
-  6/ Add to sheet
-*/
-
 function setStatus(snapshot, status) {
   console.log("*** setStatus ***");
   return snapshot.ref.child('status').set(status);
@@ -91,7 +81,7 @@ function sendEmail(val) {
     .catch((error) => console.error('There was an error while sending the email:', error));
 }
 
-function addToSheet() {
+function addToSheet(val) {
   const data = {
     spreadsheetId: CONFIG_SHEET_ID,
     range: 'A:G',
@@ -134,7 +124,7 @@ function addToCalendar(val) {
       console.log(`endDate : ${endDate} => ${endDate.getFullYear()}-${getTwoDigitsDate(endDate.getMonth() + 1)}-${getTwoDigitsDate(endDate.getDate())}`);
       var event = {
         "summary": `(en attente) ${val.member.displayName}`,
-        "description": `${val.nbPersons} personnes`,
+        "description": `${val.nbPersons} personnes - ${val.member.displayName}`,
         "start": {
           "date": `${startDate.getFullYear()}-${getTwoDigitsDate(startDate.getMonth() + 1)}-${getTwoDigitsDate(startDate.getDate())}`,
           "timeZone": "Europe/Paris",
@@ -167,6 +157,18 @@ function getTwoDigitsDate(number) {
   return "0" + number;
 }
 
+
+// When new request is created
+/*
+New request scenario :
+  1/ Set default status
+  2/ Add to calendar
+  3/ Add log
+  4/ Duplicate request
+  5/ Send email
+  6/ Send email to admin (TODO)
+  7/ Add to sheet
+*/
 exports.newRequest = functions.database.ref("{users}/{userId}/requests/{requestId}").onCreate(event => {
   const snapshot = event.data;
   const val = snapshot.val();
@@ -206,65 +208,117 @@ exports.newRequest = functions.database.ref("{users}/{userId}/requests/{requestI
   });
 });
 
+// When status changes
+/*
+Status change scenario
+  - Duplicate new status
+  - Write log
+  - Update calendar
+  - Send email notification
+  - Update sheet (?)
+*/
 
 // Status changes : Add log
 exports.writeLog = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
+  const snapshot = event.data;
+  const val = snapshot.val();
+  const requestId = event.params.requestId;
+
+  // return updateStatusLog(event)
+  // .then(() => {
+    return event.data.ref.parent.child('event').once('value')
+    .then(request => {
+      console.log(request.val());
+      return updateCalendar(val, request.val());
+    });
+  // })
+  // return snapshot.ref.child('logs').push(log);
+});
+
+function updateStatusLog(event) {
   const log = {
     date: Date(),
     user: '',
     message: `Status mis à jour: ${event.data.val()}`
   };
   return event.data.ref.parent.child('logs').push(log);
-  // return snapshot.ref.child('logs').push(log);
-});
+}
 
-// Status changes : Update status on /{users}/{userId}/requests/{requestId}
-exports.updateStatus = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
-  const log = {
-    date: Date(),
-    user: '',
-    message: `Status mis à jour: ${event.data.val()}`
-  };
-  return event.data.ref.parent.child('member').once('value').then((snapshot) => {
-    console.log(`status changes user id : ${snapshot.val().uid}`);
-    const userId = snapshot.val().uid;
-    return admin.database().ref(`/users/${userId}/requests/${event.params.requestId}/status`).set(event.data.val());
-  });
-});
+function duplicateStatus(val) {
+  // TODO
+  return val;
+}
 
-// Status changes : Update calendar
-exports.updateStatus = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
-  
-  return new Promise((resolve, reject) => {
+function updateCalendar(val, evt) {
+    return new Promise((resolve, reject) => {
     return getAuthorizedClient().then((client) => {
       const calendar = google.calendar("v3");
+      const user = evt.description.split('-')[1];
 
-      return calendar.events.update({
+      return calendar.events.patch({
         auth: client,
         calendarId: "primary",
-        eventId: ""
+        eventId: evt.id,
+        resource: {
+          summary: `(${val})${user}`
+        }
       }, function(err, event) {
         if (err) {
           console.log("Error updating event" + err);
           return
         }
         console.log("Event updated");
-      })
-
-      return calendar.events.insert({
-        auth: client,
-        calendarId: "primary",
-        resource: event,
-      }, function(err, event) {
-        if (err) {
-          console.log("There was an error contacting the Calendar service: " + err);
-          return;
-        }
-        console.log("Event created: %s", event.htmlLink);
       });
     });
   });
-});
+}
+// Status changes : Update status on /{users}/{userId}/requests/{requestId}
+// exports.updateStatus = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
+//   const log = {
+//     date: Date(),
+//     user: '',
+//     message: `Status mis à jour: ${event.data.val()}`
+//   };
+//   return event.data.ref.parent.child('member').once('value').then((snapshot) => {
+//     console.log(`status changes user id : ${snapshot.val().uid}`);
+//     const userId = snapshot.val().uid;
+//     return admin.database().ref(`/users/${userId}/requests/${event.params.requestId}/status`).set(event.data.val());
+//   });
+// });
+
+// // Status changes : Update calendar
+// exports.updateStatus = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
+  
+//   return new Promise((resolve, reject) => {
+//     return getAuthorizedClient().then((client) => {
+//       const calendar = google.calendar("v3");
+
+//       return calendar.events.update({
+//         auth: client,
+//         calendarId: "primary",
+//         eventId: ""
+//       }, function(err, event) {
+//         if (err) {
+//           console.log("Error updating event" + err);
+//           return
+//         }
+//         console.log("Event updated");
+//       })
+
+//       return calendar.events.insert({
+//         auth: client,
+//         calendarId: "primary",
+//         resource: event,
+//       }, function(err, event) {
+//         if (err) {
+//           console.log("There was an error contacting the Calendar service: " + err);
+//           return;
+//         }
+//         console.log("Event created: %s", event.htmlLink);
+//       });
+//     });
+//   });
+// });
 
 
 // --------------------------------------------------------------------------------------
