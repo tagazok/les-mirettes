@@ -312,13 +312,14 @@ function getEmailTemplate(request, status) {
   `;
 
   switch (status) {
-    case 'REFUSED':`
-    <p>Votre demande de réservation a été refusée</p>
-    `
+    case 'REFUSED':
+      tpl += `
+        <p>Votre demande de réservation a été refusée</p>
+      `
     break;
     case 'PAID':
       tpl += `
-      <p>Nous avons bien reçu votre paiement. Votre réservation est terminée.</p>
+      <p>Nous avons bien reçu votre paiement. Votre réservation est confirmée.</p>
       <p>Récapitulatif :</p>
       <p>Du ${request.startDate} au ${request.endDate} (${request.nbNights} nuits)</p>
       <p>Pour <b>${request.nbPersons} personnes</b></p>
