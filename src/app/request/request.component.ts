@@ -57,8 +57,8 @@ export class RequestComponent implements OnInit {
         email: this.authService.user.email
       },
       nbPersons: this.sejourForm.value.nb,
-      startDate: this.sejourForm.value.start.toString(),
-      endDate: this.sejourForm.value.end.toString(),
+      startDate: `${this.sejourForm.value.start.getFullYear()}-${this.sejourForm.value.start.getMonth() + 1}-${this.sejourForm.value.start.getDate()}`,
+      endDate: `${this.sejourForm.value.end.getFullYear()}-${this.sejourForm.value.end.getMonth() + 1}-${this.sejourForm.value.end.getDate()}`,
       nbNights: this.nbNights(),
       totalPrice: this.totalPrice(),
     }

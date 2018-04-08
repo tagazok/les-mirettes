@@ -138,24 +138,30 @@ function addToSheet(val) {
   });
 }
 
+function addDays(date, days) {
+  var result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
 function addToCalendar(val) {
   console.log("*** addToCalendar ***");
   return new Promise((resolve, reject) => {
     return getAuthorizedClient().then((client) => {
       const calendar = google.calendar("v3");
       const startDate = new Date(val.startDate);
-      const endDate = new Date(val.endDate);
-      console.log(`startDate : ${startDate} => ${startDate.getFullYear()}-${getTwoDigitsDate(startDate.getMonth() + 1)}-${getTwoDigitsDate(startDate.getDate())}`);
-      console.log(`endDate : ${endDate} => ${endDate.getFullYear()}-${getTwoDigitsDate(endDate.getMonth() + 1)}-${getTwoDigitsDate(endDate.getDate())}`);
+      const endDate = addDays(new Date(val.endDate), 1);
+      console.log(`${val.startDate} - startDate : ${startDate} => ${startDate.getFullYear()}-${getTwoDigitsDate(startDate.getMonth() + 1)}-${getTwoDigitsDate(startDate.getDate())}`);
+      console.log(`${val.endDate} - endDate : ${endDate} => ${endDate.getFullYear()}-${getTwoDigitsDate(endDate.getMonth() + 1)}-${getTwoDigitsDate(endDate.getDate())}`);
       var event = {
         "summary": `(en attente) ${val.member.displayName}`,
         "description": `${val.nbPersons} personnes - ${val.member.displayName}`,
         "start": {
-          "date": `${startDate.getFullYear()}-${getTwoDigitsDate(startDate.getMonth() + 1)}-${getTwoDigitsDate(startDate.getDate())}`,
+          "date": `${val.startDate}`,
           "timeZone": "Europe/Paris",
         },
         "end": {
-          "date": `${endDate.getFullYear()}-${getTwoDigitsDate(endDate.getMonth() + 1)}-${getTwoDigitsDate(endDate.getDate())}`,
+          "date": `${endDate.getFullYear()}-${endDate.getMonth() + 1}-${endDate.getDate()}`,
           "timeZone": "Europe/Paris",
         }
       };
@@ -469,14 +475,14 @@ const functionsOauthClient = new OAuth2Client(CONFIG_CLIENT_ID, CONFIG_CLIENT_SE
 let oauthTokens = null;
 
 // visit the URL for this Function to request tokens
-exports.authgoogleapi = functions.https.onRequest((req, res) => {
-  res.set('Cache-Control', 'private, max-age=0, s-maxage=0');
-  res.redirect(functionsOauthClient.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-    prompt: 'consent',
-  }));
-});
+// exports.authgoogleapi = functions.https.onRequest((req, res) => {
+//   res.set('Cache-Control', 'private, max-age=0, s-maxage=0');
+//   res.redirect(functionsOauthClient.generateAuthUrl({
+//     access_type: 'offline',
+//     scope: SCOPES,
+//     prompt: 'consent',
+//   }));
+// });
 
 // setup for OauthCallback
 const DB_TOKEN_PATH = '/api_tokens';
