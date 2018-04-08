@@ -16,7 +16,8 @@ export class RequestsComponent implements OnInit {
     "PENDING": "En attente",
     "ACCEPTED": "Accepté",
     "PAID": "Payé",
-    "REFUSED": "Refusé"
+    "REFUSED": "Refusé",
+    "CANCELED": "Annulé"
   };
 
   constructor(private db: AngularFireDatabase,

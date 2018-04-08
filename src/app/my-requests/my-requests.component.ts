@@ -14,7 +14,8 @@ export class MyRequestsComponent implements OnInit {
     "PENDING": "En attente",
     "ACCEPTED": "Accepté",
     "PAID": "Payé",
-    "REFUSED": "Refusé"
+    "REFUSED": "Refusé",
+    "CANCELED": "Annulé"
   };
   
   user: any;
