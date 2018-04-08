@@ -10,7 +10,6 @@ const {google} = require('googleapis');
 admin.initializeApp(functions.config().firebase);
 const db = admin.database();
 
-
 const GOOGLE_EMAIL = functions.config().google.email;
 const GOOGLE_PASSWORD = functions.config().google.password;
 // Configure the email transport using the default SMTP transport and a GMail account.
@@ -25,6 +24,13 @@ const mailTransport = nodemailer.createTransport({
     pass: GOOGLE_PASSWORD,
   },
 });
+
+const statusArray = {
+  "PENDING": "En attente",
+  "ACCEPTED": "Accepté",
+  "PAID": "Payé",
+  "REFUSED": "Refusé"
+};
 
 exports.createProfile = functions.auth.user().onCreate( event => {
   return admin.database().ref(`/users/${event.data.uid}`).set({
@@ -172,7 +178,7 @@ New request scenario :
 exports.newRequest = functions.database.ref("{users}/{userId}/requests/{requestId}").onCreate(event => {
   const snapshot = event.data;
   const val = snapshot.val();
-  const status = "En attente";
+  const status = "PENDING";
   val.status = status;
   const requestId = event.params.requestId;
 
@@ -230,6 +236,14 @@ exports.writeLog = functions.database.ref("/requests/{requestId}/status").onUpda
     .then(request => {
       return Promise.all([
         request,
+        duplicateStatus(request.val(), requestId, val)
+      ]);
+    })
+    .then(data => {
+      console.log("*** Duplicate status DONE ***");
+      let request = data[0];
+      return Promise.all([
+        request,
         updateStatusLog(request, val)
       ]);
     })
@@ -258,15 +272,13 @@ function updateStatusLog(request, status) {
   const log = {
     date: Date(),
     user: '',
-    message: `Status mis à jour: ${status}`
+    message: `Status mis à jour: ${statusArray[status]}`
   };
   return request.ref.child('logs').push(log);
-  // return event.data.ref.parent.child('logs').push(log);
 }
 
-function duplicateStatus(val) {
-  // TODO
-  return val;
+function duplicateStatus(request, requestId, status) {
+  return admin.database().ref(`/users/${request.member.uid}/requests/${requestId}/status`).set(status);
 }
 
 function updateCalendar(val, evt) {
@@ -300,11 +312,11 @@ function getEmailTemplate(request, status) {
   `;
 
   switch (status) {
-    case 'refusé':`
+    case 'REFUSED':`
     <p>Votre demande de réservation a été refusée</p>
     `
     break;
-    case 'payé':
+    case 'PAID':
       tpl += `
       <p>Nous avons bien reçu votre paiement. Votre réservation est terminée.</p>
       <p>Récapitulatif :</p>
@@ -315,7 +327,7 @@ function getEmailTemplate(request, status) {
       <p>Bonnes vacances :)</p>
       `
     break;
-    case 'confirmé':
+    case 'ACCEPTED':
       tpl += `
       <p>Votre réservation a été acceptée, vous pouvez aller sur votre compte afin d'effectuer le paiement</p>
       <p>Récapitulatif :</p>
