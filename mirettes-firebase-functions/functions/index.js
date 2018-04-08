@@ -29,7 +29,8 @@ const statusArray = {
   "PENDING": "En attente",
   "ACCEPTED": "Accepté",
   "PAID": "Payé",
-  "REFUSED": "Refusé"
+  "REFUSED": "Refusé",
+  "CANCELED": "Annulé"
 };
 
 exports.createProfile = functions.auth.user().onCreate( event => {
@@ -62,8 +63,26 @@ function addLog(requestId, val, message) {
   // return snapshot.ref.child('logs').push(log);
 }
 
+function SendEmailToAdmin(val) {
+  const mailOptions = {
+    from: '"Les Mirettes" <noreply@firebase.com>',
+    to: "leplus.olivier@gmail.com",
+  };
+
+  mailOptions.subject = 'Demande de réservation Les Mirettes';
+  mailOptions.html = `
+  <p>${val.member.displayName} a fait une demande de réservation</p>
+  <p></p>
+  <p>Récapitulatif :</p>
+  <p>Du ${val.startDate} au ${val.endDate} (${val.nbNights} nuits)</p>
+  <p>Pour <b>${val.nbPersons} personnes</b></p>
+  <p>TOTAL : <b>${val.totalPrice} euro</b></p>
+  <p></p>
+  `
+  return mailTransport.sendMail(mailOptions)
+}
+
 function sendEmail(val) {
-  console.log("*** sendEmail ***");
   const mailOptions = {
     from: '"Les Mirettes" <noreply@firebase.com>',
     to: val.member.email,
@@ -211,6 +230,10 @@ exports.newRequest = functions.database.ref("{users}/{userId}/requests/{requestI
   })
   .then(() => {
     console.log("*** addToSheet DONE ***");
+    SendEmailToAdmin(val);
+  })
+  .then(() => {
+    console.log("*** sendEmailToAdmin DONE ***");
   });
 });
 
@@ -292,7 +315,7 @@ function updateCalendar(val, evt) {
         calendarId: "primary",
         eventId: evt.id,
         resource: {
-          summary: `(${val})${user}`
+          summary: `(${statusArray[val]})${user}`
         }
       }, function(err, event) {
         if (err) {
@@ -335,6 +358,11 @@ function getEmailTemplate(request, status) {
       <p>Du ${request.startDate} au ${request.endDate} (${request.nbNights} nuits)</p>
       <p>Pour <b>${request.nbPersons} personnes</b></p>
       <p>TOTAL : <b>${request.totalPrice} euro</b></p>
+      `
+    break;
+    case 'CANCELED':
+      tpl += `
+        <p>Votre demande de réservation a été annulée</p>
       `
     break;
   }
