@@ -220,28 +220,48 @@ Status change scenario
 
 // Status changes : Add log
 exports.writeLog = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
+  console.log("### status update triggered");
   const snapshot = event.data;
   const val = snapshot.val();
   const requestId = event.params.requestId;
 
-  // return updateStatusLog(event)
-  // .then(() => {
-    return event.data.ref.parent.child('event').once('value')
+  
+  return event.data.ref.parent.once('value')
     .then(request => {
-      console.log(request.val());
-      return updateCalendar(val, request.val());
+      return Promise.all([
+        request,
+        updateStatusLog(request, val)
+      ]);
+    })
+    .then(data => {
+      console.log("*** Update Status DONE ***");
+      let request = data[0];
+      return Promise.all([
+        request,
+        sendEmailStatusChanged(request.val(), val)
+      ]);
+    })
+    .then(data => {
+      console.log("*** Send email DONE ***");
+      let request = data[0];
+      return Promise.all([
+        request,
+        updateCalendar(val, request.val().event)
+      ]);
+    }).then((data) => {
+      console.log("*** Update calendar DONE ***");
+      console.log(data[0]);
     });
-  // })
-  // return snapshot.ref.child('logs').push(log);
 });
 
-function updateStatusLog(event) {
+function updateStatusLog(request, status) {
   const log = {
     date: Date(),
     user: '',
-    message: `Status mis à jour: ${event.data.val()}`
+    message: `Status mis à jour: ${status}`
   };
-  return event.data.ref.parent.child('logs').push(log);
+  return request.ref.child('logs').push(log);
+  // return event.data.ref.parent.child('logs').push(log);
 }
 
 function duplicateStatus(val) {
@@ -265,13 +285,71 @@ function updateCalendar(val, evt) {
       }, function(err, event) {
         if (err) {
           console.log("Error updating event" + err);
-          return
+          return reject(err);
         }
         console.log("Event updated");
+        return resolve(event.data);
       });
     });
   });
 }
+
+function getEmailTemplate(request, status) {
+  let tpl = `
+    <p>Bonjour ${request.member.displayName}</p>
+  `;
+
+  switch (status) {
+    case 'refusé':`
+    <p>Votre demande de réservation a été refusée</p>
+    `
+    break;
+    case 'payé':
+      tpl += `
+      <p>Nous avons bien reçu votre paiement. Votre réservation est terminée.</p>
+      <p>Récapitulatif :</p>
+      <p>Du ${request.startDate} au ${request.endDate} (${request.nbNights} nuits)</p>
+      <p>Pour <b>${request.nbPersons} personnes</b></p>
+      <p>TOTAL : <b>${request.totalPrice} euro</b></p>
+      <p></p>
+      <p>Bonnes vacances :)</p>
+      `
+    break;
+    case 'confirmé':
+      tpl += `
+      <p>Votre réservation a été acceptée, vous pouvez aller sur votre compte afin d'effectuer le paiement</p>
+      <p>Récapitulatif :</p>
+      <p>Du ${request.startDate} au ${request.endDate} (${request.nbNights} nuits)</p>
+      <p>Pour <b>${request.nbPersons} personnes</b></p>
+      <p>TOTAL : <b>${request.totalPrice} euro</b></p>
+      `
+    break;
+  }
+
+  tpl += `<p></p>
+          <p>A bientôt</p>
+        `;
+
+  return tpl
+}
+
+function sendEmailStatusChanged(request, status) {
+  console.log("*** sendEmail Status changed***");
+  console.log(status);
+  const mailOptions = {
+    from:'"Les Mirettes" <noreply@firebase.com>',
+    to: request.member.email,
+  };
+
+  // Building Email message.
+  mailOptions.subject = 'Demande de réservation Les Mirettes';
+  mailOptions.html = getEmailTemplate(request, status);
+
+  return mailTransport.sendMail(mailOptions);
+    // .then(() => console.log(`New subscription confirmation email sent`))
+    // .catch((error) => console.error('There was an error while sending the email:', error));
+}
+
 // Status changes : Update status on /{users}/{userId}/requests/{requestId}
 // exports.updateStatus = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
 //   const log = {
