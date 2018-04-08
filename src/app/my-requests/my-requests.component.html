@@ -8,7 +8,7 @@
           <mat-panel-description>
             {{request.nbNights}} nuits ({{getDateRange(request)}})
           </mat-panel-description>
-          <div class="request-status status-{{request.status}}" matTooltip="{{request.status}}"></div>
+          <div class="request-status status-{{request.status}}" matTooltip="{{status[request.status]}}"></div>
         </mat-expansion-panel-header>
         <div>
           Début: {{request.startDate |date:'EEEE dd MMMM yyyy'}}
@@ -20,11 +20,11 @@
             {{request.nbPersons}} personnes
         </div>
         <div>
-          Status: {{request.status}}
+          Status: {{status[request.status]}}
         </div>
-        <mat-action-row>
-          <button mat-button color="warn" (click)="chanteStatus(request, 'canceled')">Annuler</button>
-        </mat-action-row>
+        <!-- <mat-action-row>
+          <button mat-button color="warn" (click)="chanteStatus(request, 'CANCEL')">Annuler</button>
+        </mat-action-row> -->
       </mat-expansion-panel>
     </mat-accordion>
     <a routerLink="/dashboard/request" routerLinkActive="active" class="add-button">

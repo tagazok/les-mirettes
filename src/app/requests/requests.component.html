@@ -9,7 +9,7 @@
         <mat-panel-description>
           {{request.nbNights}} nuits ({{getDateRange(request)}})
         </mat-panel-description>
-        <div class="request-status status-{{request.status}}" matTooltip="{{request.status}}"></div>
+        <div class="request-status status-{{request.status}}" matTooltip="{{status[request.status]}}"></div>
       </mat-expansion-panel-header>
       <div>
         Début: {{request.startDate |date:'EEEE dd MMMM yyyy'}}
@@ -21,19 +21,18 @@
           {{request.nbPersons}} personnes
       </div>
       <div>
-        Status: {{request.status}}
+        Status: {{status[request.status]}}
       </div>
-      Logs
-      <div class="logs">
+      <div class="logs" *ngIf="authService.isAdmin()">
         <div *ngFor="let log of request.logs">
-          <span>[{{log.date |date:'dd-MM-yyyy'}}] {{log.user}} - {{log.message}} :)</span>
+          <span>[{{log.date |date:'dd-MM-yyyy'}}] {{log.user}} - {{log.message}}</span>
         </div>
       </div>
       <mat-action-row  *ngIf="authService.isAdmin()">
-        <button mat-button color="primary" (click)="chanteStatus(request, 'refusée')">Refuser</button>
-        <button mat-button color="primary" (click)="chanteStatus(request, 'confirmée')">Confirmer</button>
-        <button mat-button color="primary" (click)="chanteStatus(request, 'payée')">A payé</button>
-        <button mat-button color="warn" (click)="chanteStatus(request, 'annulée')">Annuler</button>
+        <button *ngIf="request.status != 'REFUSED'" mat-button color="primary" (click)="chanteStatus(request, 'REFUSED')">Refuser</button>
+        <button *ngIf="request.status != 'ACCEPTED'" mat-button color="primary" (click)="chanteStatus(request, 'ACCEPTED')">Confirmer</button>
+        <button *ngIf="request.status != 'PAID'" mat-button color="primary" (click)="chanteStatus(request, 'PAID')">A payé</button>
+        <button *ngIf="request.status != 'CANCELED'" mat-button color="warn" (click)="chanteStatus(request, 'CANCELED')">Annuler</button>
       </mat-action-row>
     </mat-expansion-panel>
   </mat-accordion>

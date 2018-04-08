@@ -8,28 +8,6 @@
   align-items: center;
 }
 
-.request-status {
-  border-radius: 50%;
-  width: 1em;
-  height: 1em;
-}
-
-.status-pending {
-  background-color: orange;
-}
-
-.status-confirmed {
-  background-color: green;
-}
-
-.status-refused {
-  background-color: red;
-}
-
-.status-paid {
-  background-color: grey;
-}
-
 .logs {
   background-color: #f5f5f5;
   padding: 1em;

@@ -10,6 +10,13 @@ import { AuthService } from '../auth.service';
 })
 export class MyRequestsComponent implements OnInit {
   requests: Observable<any[]>;
+  private status = {
+    "PENDING": "En attente",
+    "ACCEPTED": "Accepté",
+    "PAID": "Payé",
+    "REFUSED": "Refusé"
+  };
+  
   user: any;
 
   constructor(private db: AngularFireDatabase,

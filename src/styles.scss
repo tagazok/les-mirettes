@@ -53,3 +53,26 @@ html, body {
     }
   }
 }
+
+
+.request-status {
+  border-radius: 50%;
+  width: 1em;
+  height: 1em;
+}
+
+.status-PENDING {
+  background-color: orange;
+}
+
+.status-ACCEPTED {
+  background-color: green;
+}
+
+.status-REFUSED {
+  background-color: red;
+}
+
+.status-PAID {
+  background-color: grey;
+}
