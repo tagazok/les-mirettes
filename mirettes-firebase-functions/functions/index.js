@@ -364,6 +364,10 @@ function getEmailTemplate(request, status) {
     case 'ACCEPTED':
       tpl += `
       <p>Votre réservation a été acceptée, vous pouvez efféctuer le virement.</p>
+      <div>
+      IBAN : FR76 1870 7000 8008 0195 0725 393 <br />
+      BIC : CCBPFRPPVER
+      </div>
       <p>Récapitulatif :</p>
       <p>Du ${request.startDate} au ${request.endDate} (${request.nbNights} nuits)</p>
       <p>Pour <b>${request.nbPersons} personnes</b></p>
