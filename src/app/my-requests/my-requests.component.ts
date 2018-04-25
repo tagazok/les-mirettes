@@ -12,7 +12,7 @@ export class MyRequestsComponent implements OnInit {
   requests: Observable<any[]>;
   private status = {
     "PENDING": "En attente",
-    "ACCEPTED": "Accepté",
+    "ACCEPTED": "Accepté (en attente de paiement)",
     "PAID": "Payé",
     "REFUSED": "Refusé",
     "CANCELED": "Annulé"
@@ -39,5 +39,4 @@ export class MyRequestsComponent implements OnInit {
   chanteStatus(request, status) {
     this.db.object(`requests/${request.key}/status`).set(status);
   }
-
 }

@@ -34,15 +34,15 @@ export class RequestComponent implements OnInit {
   createForm() {
     this.sejourForm = this.fb.group({
       member: [{value: this.authService.user.displayName, disabled: true}, Validators.required ],
-      start: ['', Validators.required ],
-      end: ['', Validators.required ],
+      start: [{value: '', disabled: true }, Validators.required ],
+      end: [{value: '', disabled: true }, Validators.required ],
       nb: ['', Validators.required ],
     });
   }
 
   nbNights() {
-    const s = moment(this.sejourForm.value.start);
-    const e = moment(this.sejourForm.value.end);
+    const s = moment(this.sejourForm.controls.start.value);
+    const e = moment(this.sejourForm.controls.end.value);
     return e.diff(s, 'days') || 0;
   }
 
@@ -57,8 +57,8 @@ export class RequestComponent implements OnInit {
         email: this.authService.user.email
       },
       nbPersons: this.sejourForm.value.nb,
-      startDate: `${this.sejourForm.value.start.getFullYear()}-${this.sejourForm.value.start.getMonth() + 1}-${this.sejourForm.value.start.getDate()}`,
-      endDate: `${this.sejourForm.value.end.getFullYear()}-${this.sejourForm.value.end.getMonth() + 1}-${this.sejourForm.value.end.getDate()}`,
+      startDate: `${this.sejourForm.controls.start.value.getFullYear()}-${this.sejourForm.controls.start.value.getMonth() + 1}-${this.sejourForm.controls.start.value.getDate()}`,
+      endDate: `${this.sejourForm.controls.end.value.getFullYear()}-${this.sejourForm.controls.end.value.getMonth() + 1}-${this.sejourForm.controls.end.value.getDate()}`,
       nbNights: this.nbNights(),
       totalPrice: this.totalPrice(),
     }

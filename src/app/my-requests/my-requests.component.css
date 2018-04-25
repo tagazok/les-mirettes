@@ -3,3 +3,16 @@
   bottom: 2em;
   right: 2em;
 }
+
+.no-requests {
+  color: #929292;
+  text-align: center;
+}
+
+.no-requests div {
+  margin: 2em 0;
+}
+
+.no-requests div:first-child {
+  text-transform: uppercase;
+}

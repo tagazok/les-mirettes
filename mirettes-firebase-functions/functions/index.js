@@ -66,7 +66,7 @@ function addLog(requestId, val, message) {
 function SendEmailToAdmin(val) {
   const mailOptions = {
     from: '"Les Mirettes" <noreply@firebase.com>',
-    to: "leplus.olivier@gmail.com",
+    to: "patrick.souterre@gmail.com",
   };
 
   mailOptions.subject = 'Demande de réservation Les Mirettes';
@@ -77,6 +77,8 @@ function SendEmailToAdmin(val) {
   <p>Du ${val.startDate} au ${val.endDate} (${val.nbNights} nuits)</p>
   <p>Pour <b>${val.nbPersons} personnes</b></p>
   <p>TOTAL : <b>${val.totalPrice} euro</b></p>
+
+  <p>Pour voir la liste des demandes de réservation, cliquez <a href="http://localhost:4200/#/dashboard/my-requests">ici</a></p>
   <p></p>
   `
   return mailTransport.sendMail(mailOptions)
@@ -91,12 +93,13 @@ function sendEmail(val) {
   // Building Email message.
   mailOptions.subject = 'Demande de réservation Les Mirettes';
   mailOptions.html = `
-  <p>Bonjour ${val.member.displayName}</p>
-  <p>Nous avons bien reçu votre demande de réservation</p>
+  <p>Bonjour ${val.member.displayName},</p>
+  <p>Votre demande de réservation a bien été reçue et est en attente de confirmation.</p>
   <p>Récapitulatif :</p>
   <p>Du ${val.startDate} au ${val.endDate} (${val.nbNights} nuits)</p>
   <p>Pour <b>${val.nbPersons} personnes</b></p>
   <p>TOTAL : <b>${val.totalPrice} euro</b></p>
+  <p>Vous pouvez accéder à la liste de vos demandes de réservation en cliquant <a href="http://localhost:4200/#/dashboard/my-requests">ici</a></p>
   <p></p>
   <p>A bientôt :)</p>
   `
@@ -224,7 +227,7 @@ exports.newRequest = functions.database.ref("{users}/{userId}/requests/{requestI
   })
   .then(() => {
     console.log("*** duplicateRequest DONE ***");
-    return addLog(requestId, val, "Requète créée");
+    return addLog(requestId, val, "Requête créée");
   })
   .then(() => {
     console.log("*** addLog DONE ***");
@@ -343,7 +346,8 @@ function getEmailTemplate(request, status) {
   switch (status) {
     case 'REFUSED':
       tpl += `
-        <p>Votre demande de réservation a été refusée</p>
+        <p>Votre demande de réservation a été refusée.</p>
+        <p>Veuillez contacter Patrick pour plus d'informations.</p>
       `
     break;
     case 'PAID':
@@ -359,7 +363,7 @@ function getEmailTemplate(request, status) {
     break;
     case 'ACCEPTED':
       tpl += `
-      <p>Votre réservation a été acceptée, vous pouvez aller sur votre compte afin d'effectuer le paiement</p>
+      <p>Votre réservation a été acceptée, vous pouvez efféctuer le virement.</p>
       <p>Récapitulatif :</p>
       <p>Du ${request.startDate} au ${request.endDate} (${request.nbNights} nuits)</p>
       <p>Pour <b>${request.nbPersons} personnes</b></p>
@@ -368,14 +372,16 @@ function getEmailTemplate(request, status) {
     break;
     case 'CANCELED':
       tpl += `
-        <p>Votre demande de réservation a été annulée</p>
+        <p>Votre demande de réservation a été annulée.</p>
       `
     break;
   }
 
-  tpl += `<p></p>
-          <p>A bientôt</p>
-        `;
+  tpl += `
+    <p>Vous pouvez accéder à la liste de vos demandes de réservation en cliquant <a href="http://localhost:4200/#/dashboard/my-requests">ici</a></p>
+    <p></p>
+    <p>A bientôt</p>
+  `;
 
   return tpl
 }
