@@ -2,7 +2,7 @@
   height: 100vh;
   width: 100%;
 
-  background: url('/assets/vb.jpg') no-repeat center center fixed;
+  background: url('assets/vb.jpg') no-repeat center center fixed;
   background-size: cover;
   overflow: hidden;
 }
