@@ -78,7 +78,7 @@ function SendEmailToAdmin(val) {
   <p>Pour <b>${val.nbPersons} personnes</b></p>
   <p>TOTAL : <b>${val.totalPrice} euro</b></p>
 
-  <p>Pour voir la liste des demandes de réservation, cliquez <a href="http://localhost:4200/#/dashboard/my-requests">ici</a></p>
+  <p>Pour voir la liste des demandes de réservation, cliquez <a href="https://tagazok.github.io/les-mirettes/#/dashboard/requests" target="_blank">ici</a></p>
   <p></p>
   `
   return mailTransport.sendMail(mailOptions)
@@ -99,7 +99,7 @@ function sendEmail(val) {
   <p>Du ${val.startDate} au ${val.endDate} (${val.nbNights} nuits)</p>
   <p>Pour <b>${val.nbPersons} personnes</b></p>
   <p>TOTAL : <b>${val.totalPrice} euro</b></p>
-  <p>Vous pouvez accéder à la liste de vos demandes de réservation en cliquant <a href="http://localhost:4200/#/dashboard/my-requests">ici</a></p>
+  <p>Vous pouvez accéder à la liste de vos demandes de réservation en cliquant <a href="https://tagazok.github.io/les-mirettes/#/dashboard/my-requests" target="_blank">ici</a></p>
   <p></p>
   <p>A bientôt :)</p>
   `
@@ -363,7 +363,7 @@ function getEmailTemplate(request, status) {
     break;
     case 'ACCEPTED':
       tpl += `
-      <p>Votre réservation a été acceptée, vous pouvez efféctuer le virement.</p>
+      <p>Votre réservation a été acceptée et est en attente de paiement.</p>
       <div>
       IBAN : FR76 1870 7000 8008 0195 0725 393 <br />
       BIC : CCBPFRPPVER
@@ -382,7 +382,7 @@ function getEmailTemplate(request, status) {
   }
 
   tpl += `
-    <p>Vous pouvez accéder à la liste de vos demandes de réservation en cliquant <a href="http://localhost:4200/#/dashboard/my-requests">ici</a></p>
+    <p>Vous pouvez accéder à la liste de vos demandes de réservation en cliquant <a href="https://tagazok.github.io/les-mirettes/#/dashboard/my-requests">ici</a></p>
     <p></p>
     <p>A bientôt</p>
   `;

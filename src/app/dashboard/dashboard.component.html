@@ -11,14 +11,18 @@
         <mat-icon>more_vert</mat-icon>
       </button>
       <mat-menu #menu="matMenu">
-          <button mat-menu-item routerLink="/dashboard/my-requests">
-            <mat-icon>view_list</mat-icon>
-            <span>Mes demandes</span>
-          </button>
-          <button mat-menu-item routerLink="/dashboard/requests">
-            <mat-icon>view_list</mat-icon>
-            <span>Toutes les demandes</span>
-          </button>
+        <button mat-menu-item routerLink="/dashboard/my-requests">
+          <mat-icon>view_list</mat-icon>
+          <span>Mes demandes</span>
+        </button>
+        <button mat-menu-item routerLink="/dashboard/requests">
+          <mat-icon>view_list</mat-icon>
+          <span>Toutes les demandes</span>
+        </button>
+        <a target="_blank" mat-menu-item href="https://calendar.google.com/calendar/embed?src=mirettes.vb%40gmail.com&ctz=Europe%2FParis">
+          <mat-icon>date_range</mat-icon>
+          <span>Voir l'agenda</span>
+        </a>
         <button mat-menu-item (click)="signOut()">
           <mat-icon>exit_to_app</mat-icon>
           <span>Se déconnecter</span>
