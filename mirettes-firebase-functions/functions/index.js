@@ -256,6 +256,18 @@ Status change scenario
   - Update sheet (?)
 */
 
+exports.deleteRequest = functions.database.ref("/requests/{requestId}").onDelete(event => {
+  const snapshot = event.data;
+  const val = snapshot.val();
+
+  const requestId = event.params.requestId;
+  const request = event.data.previous.val();
+  console.log("Old request : ");
+  console.log(request);
+  
+  return admin.database().ref(`/users/${request.member.uid}/requests/${requestId}`).remove();
+});
+
 // Status changes : Add log
 exports.writeLog = functions.database.ref("/requests/{requestId}/status").onUpdate(event => {
   console.log("### status update triggered");
