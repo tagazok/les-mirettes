@@ -33,7 +33,7 @@
         <button *ngIf="request.status != 'ACCEPTED'" mat-button color="primary" (click)="chanteStatus(request, 'ACCEPTED')">Confirmer</button>
         <button *ngIf="request.status != 'PAID'" mat-button color="primary" (click)="chanteStatus(request, 'PAID')">A payé</button>
         <button *ngIf="request.status != 'CANCELED'" mat-button color="warn" (click)="chanteStatus(request, 'CANCELED')">Annuler</button>
-        <button mat-button color="warn" (click)="deleteRequest(request)">Annuler</button>
+        <button mat-button color="warn" (click)="deleteRequest(request)">Supprimer</button>
       </mat-action-row>
     </mat-expansion-panel>
   </mat-accordion>

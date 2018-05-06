@@ -56,6 +56,6 @@ export class RequestsComponent implements OnInit {
   }
 
   deleteRequest(request) {
-    this.db.object(`requests/${request.key}/status`).remove();
+    this.db.object(`requests/${request.key}`).remove();
   }
 }

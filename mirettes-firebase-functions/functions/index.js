@@ -265,7 +265,10 @@ exports.deleteRequest = functions.database.ref("/requests/{requestId}").onDelete
   console.log("Old request : ");
   console.log(request);
   
-  return admin.database().ref(`/users/${request.member.uid}/requests/${requestId}`).remove();
+  return admin.database().ref(`/users/${request.member.uid}/requests/${requestId}`).remove()
+  .then(() => {
+    return removeEventInCalendar(request.event.id);
+  });
 });
 
 // Status changes : Add log
@@ -302,10 +305,17 @@ exports.writeLog = functions.database.ref("/requests/{requestId}/status").onUpda
     .then(data => {
       console.log("*** Send email DONE ***");
       let request = data[0];
-      return Promise.all([
-        request,
-        updateCalendar(val, request.val().event)
-      ]);
+      if (val === "REFUSED" || val === "CANCELED") {
+        return Promise.all([
+          request,
+          removeEventInCalendar(request.val().event.id)
+        ]);
+      } else {
+        return Promise.all([
+          request,
+          updateCalendar(val, request.val().event)
+        ]);
+      }
     }).then((data) => {
       console.log("*** Update calendar DONE ***");
       console.log(data[0]);
@@ -323,6 +333,28 @@ function updateStatusLog(request, status) {
 
 function duplicateStatus(request, requestId, status) {
   return admin.database().ref(`/users/${request.member.uid}/requests/${requestId}/status`).set(status);
+}
+
+function removeEventInCalendar(eventId) {
+  console.log("Remove event id : " + eventId);
+  return new Promise((resolve, reject) => {
+    return getAuthorizedClient().then((client) => {
+      const calendar = google.calendar("v3");
+
+      return calendar.events.delete({
+        auth: client,
+        calendarId: "primary",
+        eventId: eventId
+      }, function(err, event) {
+        if (err) {
+          console.log("There wan an error deleting the event : " + err);
+          return reject(err);
+        }
+        console.log(event);
+        return resolve();
+      });
+    });
+  });
 }
 
 function updateCalendar(val, evt) {
